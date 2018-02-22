@@ -8,13 +8,15 @@ import android.view.*
 import android.graphics.*
 class CircleLineMoverView(ctx:Context):View(ctx) {
     val paint:Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    val renderer = Renderer(this)
     override fun onDraw(canvas:Canvas) {
-
+        canvas.drawColor(Color.parseColor("#212121"))
+        renderer.render(canvas, paint)
     }
     override fun onTouchEvent(event:MotionEvent):Boolean {
         when(event.action) {
             MotionEvent.ACTION_DOWN -> {
-
+                renderer.handleTap(event.x)
             }
         }
         return true
@@ -128,7 +130,7 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
             }
         }
         fun handleTap(x : Float) {
-            if(screen.getUpdatedX(x) != circleLine.x) {
+            if(screen.getUpdatedX(x) != circleLine?.x?:0f) {
                 val diff = screen.getUpdatedX(x)
                 circleLine?.startUpdating(diff/Math.abs(diff),{
                     animator.start()
