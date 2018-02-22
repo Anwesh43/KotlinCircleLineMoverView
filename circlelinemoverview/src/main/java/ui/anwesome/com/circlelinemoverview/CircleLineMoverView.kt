@@ -67,7 +67,7 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
     }
     data class Screen(var x:Float = 0f, var y:Float = 0f) {
         fun update(w:Float) {
-            x -= w
+            x = -w
         }
         fun drawInScreen(canvas:Canvas, drawcb : (Canvas) -> Unit) {
             canvas.save()
@@ -77,7 +77,7 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
         }
         fun getUpdatedX(x : Float):Float = x - this.x
     }
-    data class CircleLine(var x:Float, var y:Float, var size:Float) {
+    data class CircleLine(var x:Float, var y:Float, var size:Float, var dir:Float = 0f) {
         val state = State()
         fun draw(canvas:Canvas, paint:Paint) {
             canvas.save()
@@ -86,19 +86,54 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
             paint.strokeWidth = size/30
             paint.strokeCap = Paint.Cap.ROUND
             canvas.drawArc(RectF(-size/2, -size/2, size/2, size/2), 0f , 360f * (1 - state.scales[0]), false, paint)
-            canvas.drawLine((2 * Math.PI * (size / 2)).toFloat()*(state.scales[1]), 0f, (2 * Math.PI * (size / 2)).toFloat()*(state.scales[0]), 0f, paint)
+            canvas.drawLine((2 * Math.PI * (size / 2) * this.dir).toFloat()*(state.scales[1]), 0f, (2 * Math.PI * (size / 2) * this.dir).toFloat()*(state.scales[0]), 0f, paint)
             canvas.save()
-            canvas.translate((2 * Math.PI * (size/2)).toFloat() * state.scales[0],0f)
+            canvas.translate((2 * Math.PI * (size/2) * this.dir).toFloat() * state.scales[0],0f)
             canvas.drawArc(RectF(-size/2, -size/2, size/2, size/2), 0f , 360f * state.scales[1], false, paint)
             canvas.restore()
             canvas.restore()
         }
-        fun startUpdating(startcb: () -> Unit) {
+        fun startUpdating(dir:Float, startcb: () -> Unit) {
+            this.dir = dir
             state.startUpdating(startcb)
         }
         fun update(stopcb : () -> Unit, updatecb: (Float) -> Unit) {
-            updatecb(state.scales[0])
-            state.update(stopcb)
+            updatecb((state.scales[0]*this.dir * (2*Math.PI*size/2).toFloat() + x))
+            state.update({
+                x+=this.dir * (2*Math.PI*size/2).toFloat()
+                stopcb()
+            })
+        }
+    }
+    data class Renderer(var view:CircleLineMoverView, var time:Int = 0) {
+        val animator = Animator(view)
+        var circleLine:CircleLine?=null
+        val screen = Screen()
+        fun render(canvas:Canvas, paint:Paint) {
+            val w = canvas.width.toFloat()
+            val h = canvas.height.toFloat()
+            if(time == 0) {
+                circleLine = CircleLine(w/2, h/2, Math.min(w,h)/10)
+            }
+            screen.drawInScreen(canvas, {
+                circleLine?.draw(canvas, paint)
+            })
+            time++
+            animator.animate {
+                circleLine?.update({
+                    animator.stop()
+                }, { x ->
+                    screen.update(x - w)
+                })
+            }
+        }
+        fun handleTap(x : Float) {
+            if(screen.getUpdatedX(x) != circleLine.x) {
+                val diff = screen.getUpdatedX(x)
+                circleLine?.startUpdating(diff/Math.abs(diff),{
+                    animator.start()
+                })
+            }
         }
     }
 }
