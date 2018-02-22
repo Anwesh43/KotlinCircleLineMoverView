@@ -3,6 +3,7 @@ package ui.anwesome.com.circlelinemoverview
 /**
  * Created by anweshmishra on 22/02/18.
  */
+import android.app.Activity
 import android.content.*
 import android.view.*
 import android.graphics.*
@@ -136,6 +137,12 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
                     animator.start()
                 })
             }
+        }
+    }
+    companion object {
+        fun create(activity: Activity) {
+            val view = CircleLineMoverView(activity)
+            activity.setContentView(view)
         }
     }
 }
