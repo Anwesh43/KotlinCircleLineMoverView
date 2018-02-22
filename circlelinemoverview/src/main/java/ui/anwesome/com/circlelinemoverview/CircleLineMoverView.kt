@@ -75,5 +75,30 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
             drawcb(canvas)
             canvas.restore()
         }
+        fun getUpdatedX(x : Float):Float = x - this.x
+    }
+    data class CircleLine(var x:Float, var y:Float, var size:Float) {
+        val state = State()
+        fun draw(canvas:Canvas, paint:Paint) {
+            canvas.save()
+            canvas.translate(x,y)
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = size/30
+            paint.strokeCap = Paint.Cap.ROUND
+            canvas.drawArc(RectF(-size/2, -size/2, size/2, size/2), 0f , 360f * (1 - state.scales[0]), false, paint)
+            canvas.drawLine((2 * Math.PI * (size / 2)).toFloat()*(state.scales[1]), 0f, (2 * Math.PI * (size / 2)).toFloat()*(state.scales[0]), 0f, paint)
+            canvas.save()
+            canvas.translate((2 * Math.PI * (size/2)).toFloat() * state.scales[0],0f)
+            canvas.drawArc(RectF(-size/2, -size/2, size/2, size/2), 0f , 360f * state.scales[1], false, paint)
+            canvas.restore()
+            canvas.restore()
+        }
+        fun startUpdating(startcb: () -> Unit) {
+            state.startUpdating(startcb)
+        }
+        fun update(stopcb : () -> Unit, updatecb: (Float) -> Unit) {
+            updatecb(state.scales[0])
+            state.update(stopcb)
+        }
     }
 }
