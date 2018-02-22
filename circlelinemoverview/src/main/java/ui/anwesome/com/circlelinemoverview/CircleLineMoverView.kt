@@ -65,4 +65,15 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
             }
         }
     }
+    data class Screen(var x:Float = 0f, var y:Float = 0f) {
+        fun update(w:Float) {
+            x -= w
+        }
+        fun drawInScreen(canvas:Canvas, drawcb : (Canvas) -> Unit) {
+            canvas.save()
+            canvas.translate(x, 0f)
+            drawcb(canvas)
+            canvas.restore()
+        }
+    }
 }
