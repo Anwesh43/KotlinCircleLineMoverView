@@ -65,6 +65,7 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
             if(dir == 0f) {
                 dir = 1f
                 scales = arrayOf(0f, 0f)
+                startcb()
             }
         }
     }
@@ -86,8 +87,9 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
             canvas.save()
             canvas.translate(x,y)
             paint.style = Paint.Style.STROKE
-            paint.strokeWidth = size/30
+            paint.strokeWidth = size/25
             paint.strokeCap = Paint.Cap.ROUND
+            paint.color = Color.parseColor("#f44336")
             canvas.drawArc(RectF(-size/2, -size/2, size/2, size/2), 0f , 360f * (1 - state.scales[0]), false, paint)
             canvas.drawLine((2 * Math.PI * (size / 2) * this.dir).toFloat()*(state.scales[1]), 0f, (2 * Math.PI * (size / 2) * this.dir).toFloat()*(state.scales[0]), 0f, paint)
             canvas.save()
