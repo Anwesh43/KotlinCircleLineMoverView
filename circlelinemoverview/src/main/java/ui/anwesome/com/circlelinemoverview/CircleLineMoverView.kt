@@ -51,10 +51,10 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
         var scales:Array<Float> = arrayOf(0f, 0f)
         fun update(stopcb : () -> Unit) {
             scales[j] += 0.1f * dir
-            if(Math.abs(scales[j] - 1) > 1) {
+            if(scales[j] > 1) {
                 scales[j] = 1f
                 j++
-                if(j == scales.size || j == -1) {
+                if(j == scales.size) {
                     j = 0
                     dir = 0f
                     stopcb()
@@ -90,23 +90,27 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
             paint.strokeWidth = size/25
             paint.strokeCap = Paint.Cap.ROUND
             paint.color = Color.parseColor("#f44336")
-            canvas.drawArc(RectF(-size/2, -size/2, size/2, size/2), 0f , 360f * (1 - state.scales[0]), false, paint)
-            canvas.drawLine((2 * Math.PI * (size / 2) * this.dir).toFloat()*(state.scales[1]), 0f, (2 * Math.PI * (size / 2) * this.dir).toFloat()*(state.scales[0]), 0f, paint)
+            canvas.drawArc(RectF(-size / 2, -size / 2, size / 2, size / 2), 90f * (1 - dir) + 360f * (state.scales[0]) , 360f * (1 - state.scales[0]), false, paint)
+            val updateX : (Int) -> Float = { index -> (size/2) * this.dir  + ((2 * Math.PI * (size / 2) - size ) * this.dir).toFloat()*(state.scales[index]) }
+            canvas.drawLine(updateX(1), 0f, updateX(0), 0f, paint)
             canvas.save()
-            canvas.translate((2 * Math.PI * (size/2) * this.dir).toFloat() * state.scales[0],0f)
-            canvas.drawArc(RectF(-size/2, -size/2, size/2, size/2), 0f , 360f * state.scales[1], false, paint)
+            canvas.translate((2 * Math.PI * (size/2) * this.dir).toFloat() * state.scales[0], 0f)
+            canvas.drawArc(RectF(-size/2, -size/2, size/2, size/2), 90f * (1 + dir) , 360f * state.scales[1], false, paint)
             canvas.restore()
             canvas.restore()
         }
         fun startUpdating(dir:Float, startcb: () -> Unit) {
-            this.dir = dir
-            state.startUpdating(startcb)
+            if(this.dir == 0f) {
+                this.dir = dir
+                state.startUpdating(startcb)
+            }
         }
         fun update(stopcb : () -> Unit, updatecb: (Float) -> Unit) {
-            updatecb((state.scales[0]*this.dir * (2*Math.PI*size/2).toFloat() + x))
+            //updatecb((state.scales[0]*this.dir * (2*Math.PI*size/2).toFloat() + x))
             state.update({
                 x+=this.dir * (2*Math.PI*size/2).toFloat()
                 stopcb()
+                this.dir = 0f
             })
         }
     }
@@ -120,9 +124,10 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
             if(time == 0) {
                 circleLine = CircleLine(w/2, h/2, Math.min(w,h)/10)
             }
-            screen.drawInScreen(canvas, {
-                circleLine?.draw(canvas, paint)
-            })
+//            screen.drawInScreen(canvas, {
+//                circleLine?.draw(canvas, paint)
+//            })
+            circleLine?.draw(canvas, paint)
             time++
             animator.animate {
                 circleLine?.update({
@@ -134,7 +139,7 @@ class CircleLineMoverView(ctx:Context):View(ctx) {
         }
         fun handleTap(x : Float) {
             if(screen.getUpdatedX(x) != circleLine?.x?:0f) {
-                val diff = screen.getUpdatedX(x)
+                val diff = x - (circleLine?.x?:0f)
                 circleLine?.startUpdating(diff/Math.abs(diff),{
                     animator.start()
                 })
